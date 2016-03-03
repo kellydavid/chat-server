@@ -75,6 +75,10 @@ public class RequestProcessor implements Runnable{
             System.out.print("CS: Received LEAVE_CHATROOM request\n");
             leaveChatroomHandler(request);
         }
+        else if(request.startsWith("CHAT")){
+            System.out.print("CS: Received CHAT request\n");
+            chatHandler(request);
+        }
         else if(request.startsWith("KILL_SERVICE")){
             System.out.print("CS: Received KILL_SERVICE request\n");
             System.exit(0);
@@ -131,7 +135,10 @@ public class RequestProcessor implements Runnable{
                             "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
         System.out.println("Response: \n" + response);
         sendResponse(response);
-        chatroom.sendMessageToRoom(chatroom.getRef(joinRequest.get("JOIN_CHATROOM")), joinRequest.get("CLIENT_NAME"), joinRequest.get("CLIENT_NAME") + " has joined this chatroom.");
+        chatroom.sendMessageToRoom(
+                chatroom.getRef(joinRequest.get("JOIN_CHATROOM")),
+                joinRequest.get("CLIENT_NAME"),
+                joinRequest.get("CLIENT_NAME") + " has joined this chatroom." + "\n\n");
     }
 
     private synchronized void leaveChatroomHandler(String request)
@@ -150,14 +157,37 @@ public class RequestProcessor implements Runnable{
         String response = "LEFT_CHATROOM:" + leaveRequest.get("LEAVE_CHATROOM") + "\n" +
                             "JOIN_ID: " + leaveRequest.get("JOIN_ID") + "\n";
 	sendResponse(response);
-	chatroom.sendMessageToRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), leaveRequest.get("CLIENT_NAME"), leaveRequest.get("CLIENT_NAME") + " has left this chatroom.");
+	chatroom.sendMessageToRoom(
+            Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()),
+            leaveRequest.get("CLIENT_NAME"),
+            leaveRequest.get("CLIENT_NAME") + " has left this chatroom." + "\n\n");
         System.out.println("Response: \n" + response);
 	chatroom.removeClientFromRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), Integer.parseInt(leaveRequest.get("JOIN_ID").trim()));
     }
 
+    private synchronized void chatHandler(String request)
+    {
+        System.out.println("Request:\n" + request);
+        String data[] = request.split("\n");
+        HashMap<String, String> chatRequest = new HashMap<String, String>();
+        for (int i = 0; i < data.length; i++) {
+            String str[] = data[i].split(":");
+            chatRequest.put(str[0], str[1]);
+        }
+        if(!chatroom.isClientMemberOfRoom(Integer.parseInt(chatRequest.get("CHAT").trim()), Integer.parseInt(chatRequest.get("JOIN_ID").trim()))){
+            sendErrorResponse(1, "Client not a member of chatroom");
+            return;
+        }
+        chatroom.sendMessageToRoom(chatroom.getRef(
+                chatRequest.get("JOIN_ID")),
+                chatRequest.get("CLIENT_NAME"),
+                chatRequest.get("MESSAGE"));
+        System.out.println("Sent Message to chatroom\n");
+    }
+
     public void sendChatMessageToClient(Integer room_ref, String client, String message)
     {
-        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE: " + message + "\n\n";
+        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE: " + message;
         System.out.println(response);
         sendResponse(response);
     }
