@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -191,10 +192,25 @@ public class RequestProcessor implements Runnable{
     private synchronized void disconnectHandler(String request){
         System.out.println("Request:\n" + request);
         String data[] = request.split("\n");
-        HashMap<String, String> chatRequest = new HashMap<String, String>();
+        HashMap<String, String> disconnectRequest = new HashMap<String, String>();
         for (int i = 0; i < data.length; i++) {
             String str[] = data[i].split(":");
-            chatRequest.put(str[0], str[1]);
+            disconnectRequest.put(str[0], str[1]);
+        }
+        // for each room the client is a member of
+        // remove the client from the room
+        // notify all the members of the rooms
+        ArrayList<Integer> rooms = chatroom.getClientRooms(disconnectRequest.get("CLIENT_NAME").trim());
+        for(Integer room: rooms){
+            String response = "LEFT_CHATROOM:" + room + "\n" +
+                    "JOIN_ID: " + chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()) + "\n";
+            sendResponse(response);
+            chatroom.sendMessageToRoom(
+                    room,
+                    disconnectRequest.get("CLIENT_NAME"),
+                    disconnectRequest.get("CLIENT_NAME") + " has left this chatroom." + "\n\n");
+            System.out.println("Response: \n" + response);
+            chatroom.removeClientFromRoom(room, chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()));
         }
         connectionAlive = false;
     }

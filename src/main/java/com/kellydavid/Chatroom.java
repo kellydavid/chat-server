@@ -69,6 +69,17 @@ public class Chatroom {
         return clients.contains(client_ref) ? true:false;
     }
 
+    public synchronized ArrayList<Integer> getClientRooms(String client){
+        Integer clientRef = client.hashCode();
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        for (Map.Entry<Integer, ArrayList<Integer>> entry : rooms.entrySet()) {
+            if (entry.getValue().contains(clientRef)){
+                result.add(entry.getKey());
+            }
+        }
+        return result;
+    }
+
     public String getAddress() {
         return address;
     }
