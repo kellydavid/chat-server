@@ -149,12 +149,12 @@ public class RequestProcessor implements Runnable{
                             "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
         System.out.println(response);
         sendResponse(response);
-        chatroom.sendMessageToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"), " has joined this chatroom.");
+        chatroom.sendMessageToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"), joinRequest.get("CLIENT_NAME") + " has joined this chatroom.");
     }
 
     public synchronized void sendChatMessageToClient(Integer room_ref, String client, String message)
     {
-        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE:" + message + "\n\n";
+        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE: " + message + "\n\n";
         System.out.println(response);
         sendResponse(response);
     }
