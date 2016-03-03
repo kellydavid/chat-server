@@ -21,13 +21,13 @@ public class Chatroom {
         this.clients = new HashMap<Integer, Client>();
     }
 
-    public synchronized void sendMessageToRoom(String room, String client, String message)
+    public synchronized void sendMessageToRoom(Integer room_ref, String client, String message)
     {
-        ArrayList<Integer> clientList = rooms.get(room.hashCode());
+        ArrayList<Integer> clientList = rooms.get(room_ref);
         for (Integer clientRef: clientList) {
             // get client
             Client connection = clients.get(clientRef);
-            connection.getConnection().sendChatMessageToClient(room.hashCode(), client, message);
+            connection.getConnection().sendChatMessageToClient(room_ref, client, message);
         }   
     }
 
@@ -58,15 +58,15 @@ public class Chatroom {
         rooms.get(room.hashCode()).add(client.hashCode());
     }
 
-    public synchronized void removeClientFromRoom(String room, String client){
-        rooms.get(room.hashCode()).remove(client.hashCode());
+    public synchronized void removeClientFromRoom(Integer room_ref, Integer client_ref){
+        rooms.get(room_ref).remove(client_ref);
     }
 
-    public synchronized boolean isClientMemberOfRoom(String room, String client)
+    public synchronized boolean isClientMemberOfRoom(Integer room_ref, Integer client_ref)
     {
-        ArrayList<Integer> clients = rooms.get(room.hashCode());
+        ArrayList<Integer> clients = rooms.get(room_ref);
         if(clients == null) return false;
-        return clients.contains(client.hashCode()) ? true:false;
+        return clients.contains(client_ref) ? true:false;
     }
 
     public String getAddress() {

@@ -93,6 +93,10 @@ public class RequestProcessor implements Runnable{
             System.out.print("CS: Received JOIN_CHATROOM request\n");
             joinChatroomHandler(request);
         }
+        else if(request.startsWith("LEAVE_CHATROOM")){
+            System.out.print("CS: Received JOIN_CHATROOM request\n");
+            leaveChatroomHandler(request);
+        }
         else if(request.startsWith("KILL_SERVICE")){
             System.out.print("CS: Received KILL_SERVICE request\n");
             System.exit(0);
@@ -113,14 +117,14 @@ public class RequestProcessor implements Runnable{
 
     private synchronized void joinChatroomHandler(String request)
     {
-        System.out.println("Request balh:\n" + request);
+        System.out.println("Request:\n" + request);
         String data[] = request.split("\n");
         HashMap<String, String> joinRequest = new HashMap<String, String>();
         for (int i = 0; i < data.length; i++) {
             String str[] = data[i].split(":");
             joinRequest.put(str[0], str[1]);
         }
-        if(chatroom.isClientMemberOfRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"))){
+        if(chatroom.isClientMemberOfRoom(chatroom.getRef(joinRequest.get("JOIN_CHATROOM")), chatroom.getRef(joinRequest.get("CLIENT_NAME")))){
             sendErrorResponse(1, "Client already exists");
             connectionAlive = false;
             return;
@@ -149,7 +153,29 @@ public class RequestProcessor implements Runnable{
                             "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
         System.out.println(response);
         sendResponse(response);
-        chatroom.sendMessageToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"), joinRequest.get("CLIENT_NAME") + " has joined this chatroom.");
+        chatroom.sendMessageToRoom(chatroom.getRef(joinRequest.get("JOIN_CHATROOM")), joinRequest.get("CLIENT_NAME"), joinRequest.get("CLIENT_NAME") + " has joined this chatroom.");
+    }
+
+    private synchronized void leaveChatroomHandler(String request)
+    {
+        System.out.println("Request balh:\n" + request);
+        String data[] = request.split("\n");
+        HashMap<String, String> leaveRequest = new HashMap<String, String>();
+        for (int i = 0; i < data.length; i++) {
+            String str[] = data[i].split(":");
+            leaveRequest.put(str[0], str[1]);
+        }
+        if(!chatroom.isClientMemberOfRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM")), Integer.parseInt(leaveRequest.get("JOIN_ID")))){
+            sendErrorResponse(1, "Client already not a member of chatroom");
+            return;
+        }
+        // disconnect client
+        chatroom.removeClientFromRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM")), Integer.parseInt(leaveRequest.get("JOIN_ID")));
+        String response = "LEFT_CHATROOM:" + leaveRequest.get("LEAVE_CHATROOM") + "\n" +
+                            "JOIN_ID: " + leaveRequest.get("JOIN_ID") + "\n";
+        System.out.println(response);
+        sendResponse(response);
+        chatroom.sendMessageToRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM")), leaveRequest.get("CLIENT_NAME"), leaveRequest.get("CLIENT_NAME") + " has left this chatroom.");
     }
 
     public synchronized void sendChatMessageToClient(Integer room_ref, String client, String message)
@@ -159,11 +185,11 @@ public class RequestProcessor implements Runnable{
         sendResponse(response);
     }
 
-    private void sendErrorResponse(int errorCode, String message){
+    private synchronized void sendErrorResponse(int errorCode, String message){
         sendResponse("ERROR_CODE:" + errorCode + "\n" + "ERROR_DESCRIPTION:" + message);
     }
 
-    private void sendResponse(String response)
+    private synchronized void sendResponse(String response)
     {
         try {
             so.getOutputStream().write(response.getBytes());
