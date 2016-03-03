@@ -11,6 +11,7 @@ public class App
 {
     public static final String STUDENT_ID = "e19b9a3807b5cfaa4db33fd30468ef249bb86ccc16c08efbed08f3fb6959e346";
     public static final int CONNECTION_POOL_SIZE = 10;
+    public static Chatroom chatroom;
 
     private static ServerSocket ss;
     private static ThreadPoolExecutor requestThreads;
@@ -25,6 +26,8 @@ public class App
         String hostname = args[0];
         int portNumber = Integer.parseInt(args[1]);
 
+        // initialise chatroom
+        chatroom = new Chatroom(hostname, portNumber);
         initialiseServerSocket(hostname, portNumber);
         requestThreads = new ThreadPoolExecutor(CONNECTION_POOL_SIZE, CONNECTION_POOL_SIZE, 1000,
                 TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
@@ -54,7 +57,7 @@ public class App
                 System.out.print("CS: Listening for connections...\n");
                 // Setup a new Connection thread when a new client connects.
                 Socket so = ss.accept();
-                requestThreads.execute(new RequestProcessor(so));
+                requestThreads.execute(new RequestProcessor(so, chatroom));
             }
         } catch (Exception e) {
             System.err.println("CS: Error while listening for connections.\n");
