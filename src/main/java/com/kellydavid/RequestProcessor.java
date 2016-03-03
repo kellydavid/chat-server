@@ -178,17 +178,16 @@ public class RequestProcessor implements Runnable{
             sendErrorResponse(1, "Client not a member of chatroom");
             return;
         }
-        chatroom.sendMessageToRoom(chatroom.getRef(
-                chatRequest.get("CHAT")),
+        chatroom.sendMessageToRoom(
+                Integer.parseInt(chatRequest.get("CHAT").trim()),
                 chatRequest.get("CLIENT_NAME"),
-                chatRequest.get("MESSAGE"));
-        System.out.println("Sent Message to chatroom\n");
+                chatRequest.get("MESSAGE") + "\n\n");
     }
 
     public void sendChatMessageToClient(Integer room_ref, String client, String message)
     {
-        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE: " + message;
-        System.out.println(response);
+        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE:" + message;
+        System.out.println("Chat message sending: \n" + response);
         sendResponse(response);
     }
 
