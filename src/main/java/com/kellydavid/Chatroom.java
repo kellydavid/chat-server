@@ -2,6 +2,7 @@ package com.kellydavid;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Created by davidkelly on 02/03/2016.
@@ -18,6 +19,16 @@ public class Chatroom {
         this.port = port;
         this.rooms = new HashMap<Integer, ArrayList<Integer>>();
         this.clients = new HashMap<Integer, Client>();
+    }
+
+    public synchronized void sendMessageToRoom(String room, String client, String message)
+    {
+        ArrayList<Integer> clientList = rooms.get(room.hashCode());
+        for (Integer clientRef: clientList) {
+            // get client
+            Client connection = clients.get(clientRef);
+            connection.getConnection().sendChatMessageToClient(room.hashCode(), client, message);
+        }   
     }
 
     public synchronized Integer getRef(String string){
@@ -39,8 +50,8 @@ public class Chatroom {
         rooms.put(room.hashCode(), new ArrayList<Integer>());
     }
 
-    public synchronized void addClient(String client, boolean tcp, String address, String port){
-        clients.put(client.hashCode(), new Client(client, tcp, address, port));
+    public synchronized void addClient(String client, boolean tcp, String address, String port, RequestProcessor connection){
+        clients.put(client.hashCode(), new Client(client, tcp, address, port, connection));
     }
 
     public synchronized void addClientToRoom(String room, String client){
@@ -68,20 +79,26 @@ public class Chatroom {
 
     class Client
     {
+        private RequestProcessor connection;
         private String name;
         private boolean tcp; // if false then use udp
         private String ip;
         private String port;
 
-        public Client(String name){
-            this(name, true, "0", "0");
+        public Client(String name, RequestProcessor connection){
+            this(name, true, "0", "0", connection);
         }
 
-        public Client(String name, boolean tcp, String ip, String port){
+        public Client(String name, boolean tcp, String ip, String port, RequestProcessor connection){
             this.name = name;
             this.tcp = tcp;
             this.ip = ip;
             this.port = port;
+            this.connection = connection;
+        }
+
+        public RequestProcessor getConnection() {
+            return connection;
         }
 
         public synchronized String getName() {

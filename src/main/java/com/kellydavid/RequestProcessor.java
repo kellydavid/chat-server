@@ -5,12 +5,14 @@ import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Map;
 
 public class RequestProcessor implements Runnable{
 
     private Socket so;
     private Chatroom chatroom;
     public static final int RECEIVE_BUFFER_SIZE = 2048;
+    private boolean connectionAlive = false;
 
     /**
      * Constructor for RequestProcessor accepts socket of client.
@@ -24,10 +26,12 @@ public class RequestProcessor implements Runnable{
     public void run()
     {
         try{
-            // receive data
-            String recvd = readRequest(so.getInputStream());
-            // process request
-            process(recvd);
+            while(connectionAlive) {
+                // receive data
+                String recvd = readRequest(so.getInputStream());
+                // process request
+                process(recvd);
+            }
             // close socket
             so.close();
         }catch(Exception e){
@@ -106,11 +110,11 @@ public class RequestProcessor implements Runnable{
             // add client
             if(joinRequest.get("CLIENT_IP").equals("0") && joinRequest.get("PORT").equals("0"))
             {
-                chatroom.addClient(joinRequest.get("CLIENT_NAME"), true, joinRequest.get("CLIENT_IP"), joinRequest.get("PORT"));
+                chatroom.addClient(joinRequest.get("CLIENT_NAME"), true, joinRequest.get("CLIENT_IP"), joinRequest.get("PORT"), this);
             }
             else
             {
-                chatroom.addClient(joinRequest.get("CLIENT_NAME"), false, joinRequest.get("CLIENT_IP"), joinRequest.get("PORT"));
+                chatroom.addClient(joinRequest.get("CLIENT_NAME"), false, joinRequest.get("CLIENT_IP"), joinRequest.get("PORT"), null);
             }
         }
         // add client to room
@@ -122,6 +126,13 @@ public class RequestProcessor implements Runnable{
                             "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
         System.out.println(response);
         sendResponse(response);
+        chatroom.sendMessageToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"), " has joined this chatroom.");
+        connectionAlive = true;
+    }
+
+    public synchronized void sendChatMessageToClient(Integer room_ref, String client, String message)
+    {
+        sendResponse("CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE:" + message + "\n\n");
     }
 
     private void sendErrorResponse(int errorCode, String message){
