@@ -179,7 +179,7 @@ public class RequestProcessor implements Runnable{
             return;
         }
         chatroom.sendMessageToRoom(chatroom.getRef(
-                chatRequest.get("JOIN_ID")),
+                chatRequest.get("CHAT")),
                 chatRequest.get("CLIENT_NAME"),
                 chatRequest.get("MESSAGE"));
         System.out.println("Sent Message to chatroom\n");
