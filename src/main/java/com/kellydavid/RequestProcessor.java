@@ -79,6 +79,10 @@ public class RequestProcessor implements Runnable{
             System.out.print("CS: Received CHAT request\n");
             chatHandler(request);
         }
+        else if(request.startsWith("DISCONNECT")){
+            System.out.print("CS: Received DISCONNECT request\n");
+            disconnectHandler(request);
+        }
         else if(request.startsWith("KILL_SERVICE")){
             System.out.print("CS: Received KILL_SERVICE request\n");
             System.exit(0);
@@ -182,6 +186,17 @@ public class RequestProcessor implements Runnable{
                 Integer.parseInt(chatRequest.get("CHAT").trim()),
                 chatRequest.get("CLIENT_NAME"),
                 chatRequest.get("MESSAGE") + "\n\n");
+    }
+
+    private synchronized void disconnectHandler(String request){
+        System.out.println("Request:\n" + request);
+        String data[] = request.split("\n");
+        HashMap<String, String> chatRequest = new HashMap<String, String>();
+        for (int i = 0; i < data.length; i++) {
+            String str[] = data[i].split(":");
+            chatRequest.put(str[0], str[1]);
+        }
+        connectionAlive = false;
     }
 
     public void sendChatMessageToClient(Integer room_ref, String client, String message)
