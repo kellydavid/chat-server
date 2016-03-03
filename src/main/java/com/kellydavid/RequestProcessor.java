@@ -12,7 +12,7 @@ public class RequestProcessor implements Runnable{
     private Socket so;
     private Chatroom chatroom;
     public static final int RECEIVE_BUFFER_SIZE = 2048;
-    private boolean connectionAlive = false;
+    private boolean connectionAlive = true;
 
     /**
      * Constructor for RequestProcessor accepts socket of client.
@@ -30,7 +30,8 @@ public class RequestProcessor implements Runnable{
                 // receive data
                 String recvd = readRequest(so.getInputStream());
                 // process request
-                process(recvd);
+                if(recvd != null)
+                    process(recvd);
             }
             // close socket
             so.close();
@@ -45,22 +46,42 @@ public class RequestProcessor implements Runnable{
         char[] buffer = new char[RECEIVE_BUFFER_SIZE];
         char[] result = null;
         int read = 0;
-        boolean keepReading = true;
-        while(keepReading) {
             try {
                 read = isr.read(buffer, 0, buffer.length);
                 if(read>0){
                     result = new char[read];
                     System.arraycopy(buffer, 0, result, 0, read);
-                    keepReading= false;
+                    return new String(result);
+                }else{
+                    return null;
                 }
             } catch (Exception e) {
-                keepReading = false;
                 e.printStackTrace();
             }
-        }
-        return new String(result);
+        return null;
     }
+
+//    private synchronized String readRequest(InputStream is){
+//        InputStreamReader isr = new InputStreamReader(is);
+//        char[] buffer = new char[RECEIVE_BUFFER_SIZE];
+//        char[] result = null;
+//        int read = 0;
+//        boolean keepReading = true;
+//        while(keepReading) {
+//            try {
+//                read = isr.read(buffer, 0, buffer.length);
+//                if(read>0){
+//                    result = new char[read];
+//                    System.arraycopy(buffer, 0, result, 0, read);
+//                    keepReading= false;
+//                }
+//            } catch (Exception e) {
+//                keepReading = false;
+//                e.printStackTrace();
+//            }
+//        }
+//        return new String(result);
+//    }
 
     private void process(String request)
     {
@@ -87,6 +108,7 @@ public class RequestProcessor implements Runnable{
                 "\nIP:" + so.getLocalAddress().getHostAddress() +
                 "\nPort:" + so.getLocalPort() +
                 "\nStudentID:" + App.STUDENT_ID);
+        connectionAlive = false;
     }
 
     private synchronized void joinChatroomHandler(String request)
@@ -100,6 +122,7 @@ public class RequestProcessor implements Runnable{
         }
         if(chatroom.isClientMemberOfRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"))){
             sendErrorResponse(1, "Client already exists");
+            connectionAlive = false;
             return;
         }
         if(!chatroom.doesRoomExist(joinRequest.get("JOIN_CHATROOM"))){
@@ -127,12 +150,13 @@ public class RequestProcessor implements Runnable{
         System.out.println(response);
         sendResponse(response);
         chatroom.sendMessageToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"), " has joined this chatroom.");
-        connectionAlive = true;
     }
 
     public synchronized void sendChatMessageToClient(Integer room_ref, String client, String message)
     {
-        sendResponse("CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE:" + message + "\n\n");
+        String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE:" + message + "\n\n";
+        System.out.println(response);
+        sendResponse(response);
     }
 
     private void sendErrorResponse(int errorCode, String message){
