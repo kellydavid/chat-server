@@ -119,7 +119,7 @@ public class RequestProcessor implements Runnable{
                             "SERVER_IP:" + chatroom.getAddress() + "\n" +
                             "PORT:" + chatroom.getPort() + "\n" +
                             "ROOM_REF:" + chatroom.getRef(joinRequest.get("JOIN_CHATROOM")) + "\n" +
-                            "CLIENT_REF:" + chatroom.getRef(joinRequest.get("CLIENT_NAME"));
+                            "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
         System.out.println(response);
         sendResponse(response);
     }
