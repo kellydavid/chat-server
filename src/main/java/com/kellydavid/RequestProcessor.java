@@ -61,28 +61,6 @@ public class RequestProcessor implements Runnable{
         return null;
     }
 
-//    private synchronized String readRequest(InputStream is){
-//        InputStreamReader isr = new InputStreamReader(is);
-//        char[] buffer = new char[RECEIVE_BUFFER_SIZE];
-//        char[] result = null;
-//        int read = 0;
-//        boolean keepReading = true;
-//        while(keepReading) {
-//            try {
-//                read = isr.read(buffer, 0, buffer.length);
-//                if(read>0){
-//                    result = new char[read];
-//                    System.arraycopy(buffer, 0, result, 0, read);
-//                    keepReading= false;
-//                }
-//            } catch (Exception e) {
-//                keepReading = false;
-//                e.printStackTrace();
-//            }
-//        }
-//        return new String(result);
-//    }
-
     private void process(String request)
     {
         if(request.startsWith("HELO")) {
@@ -94,7 +72,7 @@ public class RequestProcessor implements Runnable{
             joinChatroomHandler(request);
         }
         else if(request.startsWith("LEAVE_CHATROOM")){
-            System.out.print("CS: Received JOIN_CHATROOM request\n");
+            System.out.print("CS: Received LEAVE_CHATROOM request\n");
             leaveChatroomHandler(request);
         }
         else if(request.startsWith("KILL_SERVICE")){
@@ -148,17 +126,17 @@ public class RequestProcessor implements Runnable{
         chatroom.addClientToRoom(joinRequest.get("JOIN_CHATROOM"), joinRequest.get("CLIENT_NAME"));
         String response = "JOINED_CHATROOM:" + joinRequest.get("JOIN_CHATROOM") + "\n" +
                             "SERVER_IP:" + chatroom.getAddress() + "\n" +
-                            "PORT:" + chatroom.getPort() + "\n" +
+                            "PORT:" + so.getPort() + "\n" +
                             "ROOM_REF:" + chatroom.getRef(joinRequest.get("JOIN_CHATROOM")) + "\n" +
                             "JOIN_ID: " + chatroom.getRef(joinRequest.get("CLIENT_NAME")) + "\n";
-        System.out.println(response);
+        System.out.println("Response: \n" + response);
         sendResponse(response);
         chatroom.sendMessageToRoom(chatroom.getRef(joinRequest.get("JOIN_CHATROOM")), joinRequest.get("CLIENT_NAME"), joinRequest.get("CLIENT_NAME") + " has joined this chatroom.");
     }
 
     private synchronized void leaveChatroomHandler(String request)
     {
-        System.out.println("Request balh:\n" + request);
+        System.out.println("Request :\n" + request);
         String data[] = request.split("\n");
         HashMap<String, String> leaveRequest = new HashMap<String, String>();
         for (int i = 0; i < data.length; i++) {
@@ -169,27 +147,26 @@ public class RequestProcessor implements Runnable{
             sendErrorResponse(1, "Client already not a member of chatroom");
             return;
         }
-        // disconnect client
-        chatroom.removeClientFromRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), Integer.parseInt(leaveRequest.get("JOIN_ID").trim()));
         String response = "LEFT_CHATROOM:" + leaveRequest.get("LEAVE_CHATROOM") + "\n" +
                             "JOIN_ID: " + leaveRequest.get("JOIN_ID") + "\n";
-        System.out.println(response);
-        sendResponse(response);
-        chatroom.sendMessageToRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), leaveRequest.get("CLIENT_NAME"), leaveRequest.get("CLIENT_NAME") + " has left this chatroom.");
+	sendResponse(response);
+	chatroom.sendMessageToRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), leaveRequest.get("CLIENT_NAME"), leaveRequest.get("CLIENT_NAME") + " has left this chatroom.");
+        System.out.println("Response: \n" + response);
+	chatroom.removeClientFromRoom(Integer.parseInt(leaveRequest.get("LEAVE_CHATROOM").trim()), Integer.parseInt(leaveRequest.get("JOIN_ID").trim()));
     }
 
-    public synchronized void sendChatMessageToClient(Integer room_ref, String client, String message)
+    public void sendChatMessageToClient(Integer room_ref, String client, String message)
     {
         String response = "CHAT:" + room_ref + "\nCLIENT_NAME:" + client + "\nMESSAGE: " + message + "\n\n";
         System.out.println(response);
         sendResponse(response);
     }
 
-    private synchronized void sendErrorResponse(int errorCode, String message){
+    private void sendErrorResponse(int errorCode, String message){
         sendResponse("ERROR_CODE:" + errorCode + "\n" + "ERROR_DESCRIPTION:" + message);
     }
 
-    private synchronized void sendResponse(String response)
+    private void sendResponse(String response)
     {
         try {
             so.getOutputStream().write(response.getBytes());

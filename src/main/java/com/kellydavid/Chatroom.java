@@ -26,8 +26,8 @@ public class Chatroom {
         ArrayList<Integer> clientList = rooms.get(room_ref);
         for (Integer clientRef: clientList) {
             // get client
-            Client connection = clients.get(clientRef);
-            connection.getConnection().sendChatMessageToClient(room_ref, client, message);
+	    Client connection = clients.get(clientRef);
+	    connection.getConnection().sendChatMessageToClient(room_ref, client, message);
         }   
     }
 
