@@ -202,15 +202,11 @@ public class RequestProcessor implements Runnable{
         // notify all the members of the rooms
         ArrayList<Integer> rooms = chatroom.getClientRooms(disconnectRequest.get("CLIENT_NAME").trim());
         for(Integer room: rooms){
-            String response = "LEFT_CHATROOM:" + room + "\n" +
-                    "JOIN_ID: " + chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()) + "\n";
-            sendResponse(response);
             chatroom.sendMessageToRoom(
                     room,
                     disconnectRequest.get("CLIENT_NAME"),
                     disconnectRequest.get("CLIENT_NAME") + " has left this chatroom." + "\n\n");
-            System.out.println("Response: \n" + response);
-            chatroom.removeClientFromRoom(room, chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()));
+	    chatroom.removeClientFromRoom(room, chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()));
         }
         connectionAlive = false;
     }
