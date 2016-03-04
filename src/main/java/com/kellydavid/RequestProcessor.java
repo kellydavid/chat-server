@@ -35,7 +35,6 @@ public class RequestProcessor implements Runnable {
                     process(recvd);
             }
             // close socket
-            System.out.println("Closed Socket");
             so.close();
         } catch (Exception e) {
             System.err.println("CS: Error processing request\n");
@@ -82,6 +81,7 @@ public class RequestProcessor implements Runnable {
             disconnectHandler(request);
         } else if (request.startsWith("KILL_SERVICE")) {
             System.out.print("CS: Received KILL_SERVICE request\n");
+	    connectionAlive = false;
             System.exit(0);
         } else {
             System.out.print("CS: Received unknown request\n");
@@ -90,10 +90,10 @@ public class RequestProcessor implements Runnable {
 
     private synchronized void heloHandler(String request) {
         sendResponse(request +
-                "\nIP:" + so.getLocalAddress().getHostAddress() +
+                "IP:" + so.getLocalAddress().getHostAddress() +
                 "\nPort:" + so.getLocalPort() +
                 "\nStudentID:" + App.STUDENT_ID);
-        connectionAlive = false;
+        connectionAlive = true;
     }
 
     private synchronized void joinChatroomHandler(String request) {
