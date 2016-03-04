@@ -35,6 +35,7 @@ public class RequestProcessor implements Runnable{
                     process(recvd);
             }
             // close socket
+	    System.out.println("Closed Socket");
             so.close();
         }catch(Exception e){
             System.err.println("CS: Error processing request\n");
@@ -208,7 +209,11 @@ public class RequestProcessor implements Runnable{
                     disconnectRequest.get("CLIENT_NAME") + " has left this chatroom." + "\n\n");
 	    chatroom.removeClientFromRoom(room, chatroom.getRef(disconnectRequest.get("CLIENT_NAME").trim()));
         }
+	// Now actually remove the client
+	chatroom.removeClient(chatroom.getRef(disconnectRequest.get("CLIENT_NAME")));
         connectionAlive = false;
+	System.out.println("Room Membership: ");
+	chatroom.printRooms();
     }
 
     public void sendChatMessageToClient(Integer room_ref, String client, String message)
@@ -228,6 +233,8 @@ public class RequestProcessor implements Runnable{
             so.getOutputStream().write(response.getBytes());
             so.getOutputStream().flush();
         }catch(Exception e){
+	    System.out.println("Room Membership: ");
+	    chatroom.printRooms();
             System.err.println("CS: Error sending response.\n");
             e.printStackTrace();
         }

@@ -3,6 +3,7 @@ package com.kellydavid;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Comparator;
 
 /**
  * Created by davidkelly on 02/03/2016.
@@ -12,6 +13,16 @@ public class Chatroom {
     private int port;
     private HashMap<Integer, Client> clients; // client ref -> Client object
     private HashMap<Integer, ArrayList<Integer>> rooms; // room ref -> List of client ref memebers
+
+    public void printRooms(){
+        for(Map.Entry<Integer, ArrayList<Integer>> entry: rooms.entrySet()){
+            System.out.print(entry.getKey() + ":");
+            for (Integer client:entry.getValue()) {
+                System.out.print(" -> " + client);
+            }
+            System.out.println();
+        }
+    }
 
     public Chatroom(String address, int port)
     {
@@ -24,9 +35,25 @@ public class Chatroom {
     public synchronized void sendMessageToRoom(Integer room_ref, String client, String message)
     {
         ArrayList<Integer> clientList = rooms.get(room_ref);
-        for (Integer clientRef: clientList) {
+	clientList.sort(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                if(o1 > o2)
+			return -1;
+		else if(o1 < o2)
+			return 1;
+		else
+			return 0;
+            }
+        });
+	System.out.println("Sorted client list for sending messages:");
+	for (Integer clientRef: clientList){
+		System.out.println(clientRef);
+	}
+	for (Integer clientRef: clientList) {
             // get client
 	    Client connection = clients.get(clientRef);
+	    System.out.println("Sending message to "+connection.getName()+ " in room " + room_ref);
 	    connection.getConnection().sendChatMessageToClient(room_ref, client, message);
         }   
     }
@@ -60,6 +87,13 @@ public class Chatroom {
 
     public synchronized void removeClientFromRoom(Integer room_ref, Integer client_ref){
         rooms.get(room_ref).remove(client_ref);
+        if(rooms.get(room_ref).isEmpty()){
+            rooms.remove(room_ref);
+        }
+    }
+
+    public synchronized void removeClient(Integer client_ref){
+        clients.remove(client_ref);
     }
 
     public synchronized boolean isClientMemberOfRoom(Integer room_ref, Integer client_ref)
